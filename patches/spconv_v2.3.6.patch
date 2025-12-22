@@ -1,0 +1,27 @@
+diff --git a/example/libspconv/run_build.sh b/example/libspconv/run_build.sh
+index e3b873c..d61e9cc 100644
+--- a/example/libspconv/run_build.sh
++++ b/example/libspconv/run_build.sh
+@@ -4,11 +4,14 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+ 
+ git clone https://github.com/FindDefinition/cumm.git $SCRIPT_DIR/cumm
+ 
+-export CUMM_CUDA_VERSION=11.4 # cuda version, required but only used for flag selection when build libspconv.
++export CUMM_CUDA_VERSION=$1
+ export CUMM_DISABLE_JIT=1
+ export SPCONV_DISABLE_JIT=1
+ export CUMM_INCLUDE_PATH="\${CUMM_INCLUDE_PATH}" # if you use cumm as a subdirectory, you need this to find cumm includes.
+-export CUMM_CUDA_ARCH_LIST="7.5;8.6" # cuda arch flags
++export CUMM_CUDA_ARCH_LIST=$2
++
++echo "CUMM_CUDA_VERSION=${CUMM_CUDA_VERSION}"
++echo "CUMM_CUDA_ARCH_LIST=${CUMM_CUDA_ARCH_LIST}"
+ 
+ python -m spconv.gencode --include=$SCRIPT_DIR/spconv/include --src=$SCRIPT_DIR/spconv/src --inference_only=True
+ 
+@@ -16,4 +19,4 @@ python -m spconv.gencode --include=$SCRIPT_DIR/spconv/include --src=$SCRIPT_DIR/
+ mkdir -p $SCRIPT_DIR/build
+ cd $SCRIPT_DIR/build
+ cmake ..
+-cmake --build $SCRIPT_DIR/build --config Release -j 8 # --verbose
++cmake --build $SCRIPT_DIR/build --config Release -j$(nproc)
