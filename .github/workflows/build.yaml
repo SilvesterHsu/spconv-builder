@@ -1,0 +1,89 @@
+name: Build & Release libspconv
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'release tag'
+        required: false
+        default: ''
+      text:
+        description: 'release body'
+        required: false
+        default: ''
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build libspconv
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cuda: cuda11.4
+            image: nvcr.io/nvidia/cuda:11.4.3-devel-ubuntu20.04
+          - cuda: cuda11.8
+            image: nvcr.io/nvidia/cuda:11.8.0-devel-ubuntu20.04
+    container:
+      image: ${{ matrix.image }}
+
+    steps:
+      - name: Install git
+        run: |
+          apt-get update
+          apt-get install -y git
+          git --version
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Build libspconv
+        run: |
+          chmod +x ./scripts/setup_env.sh
+          ./scripts/setup_env.sh
+          chmod +x ./scripts/build.sh
+          ./scripts/build.sh
+          ls -lh build/
+
+      - name: Find built tar.gz
+        if: ${{ github.event_name != 'pull_request' }}
+        id: artifact
+        run: |
+          FILE=$(ls build/libspconv-*.tar.gz)
+          if [ -z "$FILE" ]; then
+            echo "No build/libspconv-*.tar.gz found!"
+            exit 1
+          fi
+          FILENAME=$(basename "$FILE")
+          echo "filepath=$FILE" >> $GITHUB_OUTPUT
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "Found artifact: $FILENAME"
+
+      - name: Upload artifact
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact.outputs.filename }}
+          path: ${{ steps.artifact.outputs.filepath }}
+
+      - name: Create Release
+        if: ${{ github.event_name != 'pull_request' && github.event.inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.event.inputs.tag }}
+          name: libspconv ${{ github.event.inputs.tag }}
+          body: |
+            ${{ github.event.inputs.text }}
+          files: ${{ steps.artifact.outputs.filepath }}
