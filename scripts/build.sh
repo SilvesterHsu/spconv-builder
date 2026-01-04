@@ -2,6 +2,7 @@
 
 set -e
 
+
 CUDA_VERSION=$(nvcc --version | grep release | sed -E 's/.*release ([0-9]+\.[0-9]+).*/\1/')
 CUDA_MAJOR=${CUDA_VERSION%.*}
 CUDA_MINOR=${CUDA_VERSION#*.}
