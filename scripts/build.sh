@@ -8,7 +8,11 @@ CUDA_MINOR=${CUDA_VERSION#*.}
 
 CUDA_ARCH_LIST="8.0;8.6"
 
-if [[ "$CUDA_MAJOR" -gt 11 ]] || [[ "$CUDA_MAJOR" -eq 11 && "$CUDA_MINOR" -gt 4 ]]; then
+ARCH="$(uname -m)"
+
+if [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+  CUDA_ARCH_LIST="8.7"
+elif [[ "$CUDA_MAJOR" -gt 11 ]] || [[ "$CUDA_MAJOR" -eq 11 && "$CUDA_MINOR" -gt 4 ]]; then
   CUDA_ARCH_LIST="${CUDA_ARCH_LIST};8.9"
 fi
 
@@ -17,18 +21,18 @@ export CUMM_DISABLE_JIT=1
 export CUMM_CUDA_ARCH_LIST=${CUDA_ARCH_LIST}
 
 pip3 install -e cumm
-pip3 install -e spconv
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_DIR=$(dirname $SCRIPT_DIR)
-ln -s $PROJECT_DIR/cumm $PROJECT_DIR/spconv/example/libspconv/cumm
 
 cd $PROJECT_DIR/spconv
+git apply $PROJECT_DIR/patches/spconv_v2.3.6.patch
+pip3 install -e .
 
-ARCH="$(uname -m)"
+ln -s $PROJECT_DIR/cumm $PROJECT_DIR/spconv/example/libspconv/cumm
+
 VERSION="$(git describe --tags --dirty --always)"
 
-git apply $PROJECT_DIR/patches/spconv_v2.3.6.patch
 bash example/libspconv/run_build.sh ${CUDA_VERSION} ${CUDA_ARCH_LIST}
 
 PKG_NAME=libspconv-${VERSION}-${ARCH}-cuda${CUDA_VERSION}
