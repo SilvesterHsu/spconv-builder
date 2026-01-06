@@ -1,10 +1,12 @@
 diff --git a/example/libspconv/run_build.sh b/example/libspconv/run_build.sh
-index e3b873c..d61e9cc 100644
+index e3b873c..e9005ac 100644
 --- a/example/libspconv/run_build.sh
 +++ b/example/libspconv/run_build.sh
-@@ -4,11 +4,14 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+@@ -2,13 +2,15 @@
  
- git clone https://github.com/FindDefinition/cumm.git $SCRIPT_DIR/cumm
+ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+ 
+-git clone https://github.com/FindDefinition/cumm.git $SCRIPT_DIR/cumm
  
 -export CUMM_CUDA_VERSION=11.4 # cuda version, required but only used for flag selection when build libspconv.
 +export CUMM_CUDA_VERSION=$1
@@ -19,9 +21,20 @@ index e3b873c..d61e9cc 100644
  
  python -m spconv.gencode --include=$SCRIPT_DIR/spconv/include --src=$SCRIPT_DIR/spconv/src --inference_only=True
  
-@@ -16,4 +19,4 @@ python -m spconv.gencode --include=$SCRIPT_DIR/spconv/include --src=$SCRIPT_DIR/
+@@ -16,4 +18,4 @@ python -m spconv.gencode --include=$SCRIPT_DIR/spconv/include --src=$SCRIPT_DIR/
  mkdir -p $SCRIPT_DIR/build
  cd $SCRIPT_DIR/build
  cmake ..
 -cmake --build $SCRIPT_DIR/build --config Release -j 8 # --verbose
 +cmake --build $SCRIPT_DIR/build --config Release -j$(nproc)
+diff --git a/pyproject.toml b/pyproject.toml
+index ac7160d..8eef759 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["setuptools>=41.0", "wheel", "pccm>=0.4.0", "cumm>=0.4.8"]
++requires = ["setuptools>=41.0", "wheel", "pccm>=0.4.0"]
+ # requires = ["setuptools>=41.0", "wheel", "pccm>=0.4.0", "cumm @ file:///io/dist/cumm_cu120-0.4.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"]
+ # requires = ["setuptools>=41.0", "wheel", "pccm>=0.4.0", "cumm @ file:///io/dist/cumm_cu117-0.4.6-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"]
+ build-backend = "setuptools.build_meta"
